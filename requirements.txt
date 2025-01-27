@@ -6,4 +6,6 @@ streamlit-chat
 psycopg2-binary
 sqlalchemy
 psycopg
+langchain-postgres 
+psycopg[binary,pool] 
 
