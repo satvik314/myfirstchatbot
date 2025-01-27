@@ -2,3 +2,5 @@ langchain
 langchain-openai
 streamlit
 streamlit-chat
+psycopg2-binary
+sqlalchemy
