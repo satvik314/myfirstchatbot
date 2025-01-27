@@ -6,4 +6,4 @@ streamlit-chat
 psycopg2-binary
 sqlalchemy
 psycopg
-libpq-dev
+
