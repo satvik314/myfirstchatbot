@@ -98,11 +98,13 @@ def load_chat_history(session_id):
 # Initialize chat history if not exists
 if "messages" not in st.session_state:
     try:
+        # Make sure the connection string includes sslmode
+        connection_string = f"{st.session_state.neon_database_url}?sslmode=require"
+        
         history = PostgresChatMessageHistory(
-            connection_string=st.session_state.neon_database_url,
+            connection_string=connection_string,
             session_id=st.session_state.session_id,
-            table_name="message_store",
-            connection_kwargs={"sslmode": "require"}  # Add this for Neon
+            table_name="message_store"
         )
         
         # Load existing messages from Postgres
@@ -197,8 +199,9 @@ if prompt := st.chat_input("What's on your mind?"):
             message_placeholder.write(full_response)
     
     # Save messages to Postgres
+    connection_string = f"{st.session_state.neon_database_url}?sslmode=require"
     history = PostgresChatMessageHistory(
-        connection_string=st.session_state.neon_database_url,
+        connection_string=connection_string,
         session_id=st.session_state.session_id,
         table_name="message_store"
     )
