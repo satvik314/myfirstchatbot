@@ -4,6 +4,8 @@ import streamlit as st
 import os
 from sqlalchemy import create_engine, text
 import uuid
+from langchain_community.chat_message_histories import PostgresChatMessageHistory
+from langchain.memory import ConversationBufferMemory
 
 # Set up Streamlit page
 st.title("🚀 Deepseek-R1 Llama-70B Chat")
@@ -93,12 +95,18 @@ def load_chat_history(session_id):
             st.error(f"Failed to load chat history: {str(e)}")
     return None
 
-# Load chat history when initializing messages
+# Initialize chat history if not exists
 if "messages" not in st.session_state:
-    loaded_messages = load_chat_history(st.session_state.session_id)
-    st.session_state.messages = loaded_messages if loaded_messages else [
+    history = PostgresChatMessageHistory(
+        connection_string=st.session_state.neon_database_url,
+        session_id=st.session_state.session_id,
+        table_name="message_store"  # Make sure this matches your table name
+    )
+    
+    # Load existing messages from Postgres
+    st.session_state.messages = [
         SystemMessage(content="You are a helpful AI assistant.")
-    ]
+    ] + history.messages
 
 # Display chat history
 for message in st.session_state.messages[1:]:  # Skip the system message
@@ -181,7 +189,17 @@ if prompt := st.chat_input("What's on your mind?"):
             thinking_placeholder.empty()
             message_placeholder.write(full_response)
     
-    # Add AI response to chat history
+    # Save messages to Postgres
+    history = PostgresChatMessageHistory(
+        connection_string=st.session_state.neon_database_url,
+        session_id=st.session_state.session_id,
+        table_name="message_store"
+    )
+    history.add_user_message(prompt)
+    history.add_ai_message(full_response)
+
+    # Update session state
+    st.session_state.messages.append(HumanMessage(content=prompt))
     st.session_state.messages.append(AIMessage(content=full_response))
 
     # After getting AI response
