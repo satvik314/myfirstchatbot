@@ -97,16 +97,23 @@ def load_chat_history(session_id):
 
 # Initialize chat history if not exists
 if "messages" not in st.session_state:
-    history = PostgresChatMessageHistory(
-        connection_string=st.session_state.neon_database_url,
-        session_id=st.session_state.session_id,
-        table_name="message_store"  # Make sure this matches your table name
-    )
-    
-    # Load existing messages from Postgres
-    st.session_state.messages = [
-        SystemMessage(content="You are a helpful AI assistant.")
-    ] + history.messages
+    try:
+        history = PostgresChatMessageHistory(
+            connection_string=st.session_state.neon_database_url,
+            session_id=st.session_state.session_id,
+            table_name="message_store",
+            connection_kwargs={"sslmode": "require"}  # Add this for Neon
+        )
+        
+        # Load existing messages from Postgres
+        st.session_state.messages = [
+            SystemMessage(content="You are a helpful AI assistant.")
+        ] + history.messages
+    except Exception as e:
+        st.error(f"Failed to connect to database: {str(e)}")
+        st.session_state.messages = [
+            SystemMessage(content="You are a helpful AI assistant.")
+        ]
 
 # Display chat history
 for message in st.session_state.messages[1:]:  # Skip the system message
